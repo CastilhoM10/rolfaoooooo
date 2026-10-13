@@ -1,0 +1,820 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>RodOS 95</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anton&family=Bungee&family=VT323&display=swap">
+<style>
+/* Layout: a fake 90s desktop ("RodOS 95") — every section is an OS window, memes are built in CSS, taskbar pinned at the bottom. Single deliberate look. */
+:root{
+  --desk:#0e7c7b; --desk-dot:#0b6a69;
+  --win:#c6c8cc; --hi:#ffffff; --lo:#6b6f75; --ink:#111316;
+  --title-a:#0b1d8a; --title-b:#1f86d6;
+  --pop:#ff2e88; --sun:#ffd23f; --mint:#3ddc97; --red:#e3342f;
+  --f-ui:"VT323", "Courier New", monospace;
+  --f-display:"Bungee", "Arial Black", Impact, sans-serif;
+  --f-meme:"Anton", Impact, "Arial Narrow", sans-serif;
+  color-scheme: light;
+}
+*{box-sizing:border-box}
+body{
+  margin:0;
+  background:var(--desk);
+  background-image:radial-gradient(var(--desk-dot) 1px, transparent 1.4px);
+  background-size:18px 18px;
+  color:var(--ink); font-family:var(--f-ui); font-size:21px; line-height:1.25;
+  overflow-x:hidden;
+}
+.page{max-width:1080px;margin:0 auto;padding:28px 16px 110px;display:grid;gap:28px}
+button{font:inherit;color:var(--ink);cursor:pointer}
+:focus-visible{outline:2px dashed var(--pop);outline-offset:3px}
+
+/* ---- window chrome ---- */
+.win{background:var(--win);border:2px solid;border-color:var(--hi) var(--ink) var(--ink) var(--hi);
+  box-shadow:inset -2px -2px 0 var(--lo), inset 2px 2px 0 #e9eaec, 6px 6px 0 rgba(0,0,0,.25);
+  min-width:0; position:relative}
+.bar{display:flex;align-items:center;gap:8px;padding:4px 6px 4px 10px;
+  background:linear-gradient(90deg,var(--title-a),var(--title-b));color:var(--hi);user-select:none;touch-action:none}
+.bar .t{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:20px;letter-spacing:.5px}
+.bar.drag{cursor:grab}
+.ctl{display:flex;gap:3px}
+.ctl b{width:22px;height:20px;display:grid;place-items:center;background:var(--win);color:var(--ink);font-size:16px;
+  border:2px solid;border-color:var(--hi) var(--ink) var(--ink) var(--hi)}
+.body{padding:18px}
+.btn{background:var(--win);padding:6px 18px;border:2px solid;border-color:var(--hi) var(--ink) var(--ink) var(--hi);
+  box-shadow:inset -2px -2px 0 var(--lo);font-size:21px;transition:transform .08s}
+.btn:active{border-color:var(--ink) var(--hi) var(--hi) var(--ink);box-shadow:inset 2px 2px 0 var(--lo);transform:translateY(1px)}
+.sunk{background:var(--hi);border:2px solid;border-color:var(--lo) var(--hi) var(--hi) var(--lo);box-shadow:inset 2px 2px 0 var(--ink)}
+
+/* ---- hero error ---- */
+.hero .body{display:grid;grid-template-columns:auto 1fr;gap:20px;align-items:start}
+.ico-err{width:64px;height:64px;border-radius:50%;background:var(--red);color:var(--hi);display:grid;place-items:center;
+  font-family:var(--f-display);font-size:40px;box-shadow:3px 3px 0 var(--ink);animation:wobble 2.4s ease-in-out infinite}
+@keyframes wobble{0%,100%{transform:rotate(0)}10%{transform:rotate(-12deg)}20%{transform:rotate(10deg)}30%{transform:rotate(0)}}
+.hero h1{font-family:var(--f-display);font-weight:400;font-size:clamp(34px,7vw,78px);line-height:.95;margin:0 0 10px;
+  color:var(--title-a);text-wrap:balance;text-shadow:3px 3px 0 var(--sun)}
+.hero h1 .glitch{display:inline-block;color:var(--pop);animation:glitch 3s steps(1) infinite}
+@keyframes glitch{0%,86%,100%{transform:none;text-shadow:3px 3px 0 var(--sun)}88%{transform:translate(3px,-2px) skewX(-8deg);text-shadow:-4px 0 var(--mint),4px 0 var(--title-b)}92%{transform:translate(-3px,1px);text-shadow:4px 0 var(--sun)}}
+.err-code{font-size:19px;color:var(--lo);margin:0 0 6px}
+.hero p{margin:0 0 6px;max-width:60ch}
+.typed{color:var(--pop);font-size:26px;min-height:1.2em}
+.typed::after{content:"_";animation:blink 1s steps(1) infinite}
+@keyframes blink{50%{opacity:0}}
+.actions{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:12px;justify-content:flex-end;position:relative;min-height:52px;padding-top:6px}
+#flee{position:relative;transition:transform .18s ease-out}
+.fine{grid-column:1/-1;font-size:17px;color:var(--lo);margin:0}
+
+/* ---- nickname stretcher ---- */
+.nick .body{display:grid;gap:14px}
+.stretch{font-family:var(--f-display);font-size:clamp(28px,6vw,60px);line-height:1.05;color:var(--hi);
+  background:var(--ink);padding:18px;overflow-wrap:anywhere;word-break:break-all;min-height:96px;
+  text-shadow:0 0 12px var(--pop);border:2px solid;border-color:var(--lo) var(--hi) var(--hi) var(--lo)}
+.stretch .u{display:inline-block;animation:bounce .9s ease-in-out infinite}
+@keyframes bounce{50%{transform:translateY(-6px)}}
+.row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{background:var(--sun);border:2px solid var(--ink);padding:2px 12px;font-size:20px;box-shadow:2px 2px 0 var(--ink)}
+.chip[aria-pressed="true"]{background:var(--pop);color:var(--hi)}
+.meter{font-size:18px;color:var(--lo)}
+
+/* ---- memes ---- */
+.meme-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:18px}
+.meme{background:var(--hi);border:3px solid var(--ink);min-width:0;display:flex;flex-direction:column;
+  transition:transform .2s cubic-bezier(.3,1.6,.5,1)}
+.meme:hover{transform:rotate(-1.5deg) scale(1.02)}
+.meme:nth-child(even):hover{transform:rotate(1.5deg) scale(1.02)}
+.cap{font-family:var(--f-meme);text-transform:uppercase;color:var(--hi);letter-spacing:.5px;line-height:1.05;
+  -webkit-text-stroke:1.5px #000;paint-order:stroke fill;text-shadow:2px 2px 0 #000;text-align:center}
+.meme small{font-size:15px;color:var(--lo);padding:4px 10px;border-top:2px solid var(--ink);background:var(--win)}
+
+.drake{display:grid;grid-template-columns:96px 1fr;flex:1}
+.drake>div{display:grid;place-items:center;padding:12px;font-size:20px;border-bottom:2px solid var(--ink)}
+.drake .face{font-size:54px;background:var(--sun);border-right:2px solid var(--ink)}
+.drake .face.yes{background:var(--mint)}
+.drake>div:nth-last-child(-n+2){border-bottom:0}
+
+.nobody{padding:16px;font-size:22px;display:grid;gap:8px;flex:1;align-content:center}
+.nobody .shout{font-family:var(--f-meme);font-size:34px;color:var(--pop);animation:shake .35s infinite}
+@keyframes shake{0%,100%{transform:translate(0)}25%{transform:translate(-2px,1px)}75%{transform:translate(2px,-1px)}}
+
+.fire{position:relative;background:linear-gradient(#ffb347,#ff6a3d 60%,#c4351b);min-height:220px;display:grid;place-items:center;overflow:hidden;flex:1}
+.fire .dog{font-size:72px;z-index:1;filter:drop-shadow(3px 3px 0 rgba(0,0,0,.4))}
+.fire .flame{position:absolute;bottom:-10px;font-size:46px;animation:flick 1.2s ease-in-out infinite}
+@keyframes flick{50%{transform:translateY(-10px) scale(1.15)}}
+.fire .cap{position:absolute;left:8px;right:8px;font-size:26px}
+.fire .top{top:10px}.fire .bot{bottom:10px;z-index:2}
+
+.stonks{background:#071a3a;min-height:220px;position:relative;overflow:hidden;flex:1}
+.stonks svg{position:absolute;inset:0;width:100%;height:100%}
+.stonks .line{stroke:var(--mint);stroke-width:5;fill:none;stroke-dasharray:600;stroke-dashoffset:600;animation:draw 2.6s ease-out .3s forwards}
+@keyframes draw{to{stroke-dashoffset:0}}
+.stonks .guy{position:absolute;left:14px;bottom:12px;font-size:58px}
+.stonks .cap{position:absolute;right:12px;bottom:14px;font-size:44px;color:var(--mint)}
+.stonks .lbl{position:absolute;left:12px;top:10px;color:var(--hi);font-size:18px}
+
+.evr{display:grid;grid-template-columns:1fr 1fr;flex:1}
+.evr>div{padding:12px;display:grid;gap:6px;align-content:start;font-size:19px}
+.evr h4{margin:0;font-family:var(--f-meme);font-weight:400;font-size:24px;text-transform:uppercase}
+.evr .exp{background:#e8f6ff;border-right:2px solid var(--ink)}
+.evr .real{background:#ffe8ef}
+.evr .big{font-size:52px;text-align:center}
+
+.notfound{background:var(--ink);color:var(--mint);padding:16px;font-size:20px;flex:1;display:grid;gap:4px;align-content:center}
+.notfound .bar404{height:18px;border:2px solid var(--mint);position:relative;overflow:hidden}
+.notfound .bar404 i{position:absolute;inset:0 auto 0 0;width:0;background:var(--mint);animation:load 4s steps(14) infinite}
+@keyframes load{0%{width:0}85%{width:99%}100%{width:99%}}
+.notfound .e{color:var(--red);font-family:var(--f-meme);font-size:30px}
+
+.brain{display:grid;flex:1}
+.brain>div{display:grid;grid-template-columns:1fr 72px;border-bottom:2px solid var(--ink)}
+.brain>div:last-child{border-bottom:0}
+.brain p{margin:0;padding:8px 10px;font-size:18px;align-self:center}
+.brain span{display:grid;place-items:center;font-size:34px;border-left:2px solid var(--ink)}
+.brain>div:nth-child(1) span{background:#f3c9a8}
+.brain>div:nth-child(2) span{background:#ffd8f0}
+.brain>div:nth-child(3) span{background:#b9f3ff;box-shadow:inset 0 0 18px #00c8ff}
+.brain>div:nth-child(4) span{background:#fff;box-shadow:inset 0 0 28px var(--sun);animation:glow 1.4s ease-in-out infinite}
+@keyframes glow{50%{box-shadow:inset 0 0 40px var(--pop)}}
+
+/* ---- changelog ---- */
+.two{display:grid;grid-template-columns:1.2fr 1fr;gap:28px}
+.log{margin:0;padding:14px;font-size:20px;max-height:360px;overflow:auto}
+.log h3{font-family:var(--f-display);font-weight:400;font-size:24px;margin:0 0 8px;color:var(--title-a)}
+.log ul{list-style:none;margin:0 0 12px;padding:0;display:grid;gap:4px}
+.log li{padding-left:28px;text-indent:-28px}
+.log .add::before{content:"[+] ";color:#118a4e}
+.log .del::before{content:"[-] ";color:var(--red)}
+.log .fix::before{content:"[~] ";color:var(--title-b)}
+
+/* ---- stats ---- */
+.stats{display:grid;gap:12px}
+.stat{display:grid;grid-template-columns:1fr auto;gap:2px 12px;align-items:end}
+.stat .k{font-size:19px}
+.stat .v{font-family:var(--f-display);font-size:22px;font-variant-numeric:tabular-nums;color:var(--title-a)}
+.stat .track{grid-column:1/-1;height:16px;padding:2px}
+.stat .fill{height:100%;background:repeating-linear-gradient(90deg,var(--title-a) 0 10px,transparent 10px 12px);width:0;transition:width 1.6s cubic-bezier(.2,.8,.2,1)}
+
+/* ---- guestbook ---- */
+.gb form{display:grid;grid-template-columns:200px 1fr auto;gap:10px;margin-bottom:14px}
+.gb input{font:inherit;padding:6px 8px;min-width:0;width:100%}
+.notes{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px}
+.note{background:var(--sun);padding:14px 14px 10px;box-shadow:3px 4px 0 rgba(0,0,0,.25);font-size:20px;
+  transform:rotate(var(--r,-1deg));min-width:0;overflow-wrap:anywhere;animation:pop .35s cubic-bezier(.3,1.6,.5,1)}
+.note:nth-child(3n+2){background:#ffb3d1;--r:1.5deg}
+.note:nth-child(3n){background:#b8f0d4;--r:-2deg}
+.note b{display:block;font-size:17px;color:var(--lo);margin-top:6px}
+.note.sample b::after{content:" · exemplo";opacity:.7}
+@keyframes pop{from{transform:scale(.6) rotate(8deg)}}
+.gb-status{margin:-4px 0 14px;font-size:18px;color:var(--lo)}
+.notes .empty{grid-column:1/-1;margin:0;padding:22px;text-align:center;border:2px dashed var(--lo);color:var(--lo)}
+.gb input:disabled,.gb button:disabled{opacity:.6;cursor:not-allowed}
+
+/* ---- finale ---- */
+.finale .body{text-align:center;display:grid;gap:14px;justify-items:center;padding-block:34px}
+.finale h2{font-family:var(--f-display);font-weight:400;font-size:clamp(32px,7vw,72px);margin:0;line-height:1;text-wrap:balance;
+  background:linear-gradient(90deg,var(--pop),var(--title-b),var(--mint),var(--sun),var(--pop));background-size:300% 100%;
+  -webkit-background-clip:text;background-clip:text;color:transparent;animation:rainbow 6s linear infinite}
+@keyframes rainbow{to{background-position:300% 0}}
+.finale p{margin:0;max-width:52ch}
+.big-btn{font-family:var(--f-display);font-size:24px;padding:12px 28px;background:var(--pop);color:var(--hi)}
+
+/* ---- wizard / steps ---- */
+.wiz{order:-2}
+.marq{order:-1}
+.wiz .body{display:grid;gap:10px;padding:12px 16px}
+.wiz-head{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:baseline;gap:4px 16px}
+.wiz-head strong{font-family:var(--f-display);font-weight:400;font-size:24px;color:var(--title-a)}
+.wiz-head span{font-variant-numeric:tabular-nums;color:var(--lo)}
+.blocks{display:grid;gap:4px;padding:4px}
+.blocks button{height:22px;border:0;padding:0;background:transparent;cursor:pointer;transition:background .3s}
+.blocks button.done{background:var(--title-a)}
+.blocks button.cur{background:var(--pop);animation:pulse 1.2s ease-in-out infinite}
+@keyframes pulse{50%{opacity:.55}}
+.step:not(.on){display:none}
+.step.on{animation:stepIn .5s cubic-bezier(.3,1.4,.5,1)}
+@keyframes stepIn{from{transform:translateY(24px) scale(.96)}}
+.wiz-nav{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:12px}
+.wiz-nav .btn{font-size:24px;padding:8px 24px}
+.wiz-nav .btn[disabled]{color:var(--lo);text-shadow:1px 1px 0 var(--hi);cursor:default}
+.wiz-nav #next{outline:2px solid var(--ink);outline-offset:0}
+.wiz-nav .hint{color:var(--hi);font-size:18px;text-shadow:1px 1px 0 var(--ink)}
+
+/* ---- message boxes ---- */
+.msgs>.body{display:grid;gap:18px}
+.msgs .lead{margin:0;max-width:60ch}
+.msg-stage{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:22px}
+.mbox{transform:rotate(var(--rot,0deg));transition:transform .2s}
+.mbox:hover{transform:rotate(0) scale(1.02)}
+.mbox .body{display:grid;grid-template-columns:auto 1fr;gap:10px 14px;align-items:center;padding:16px}
+.mbox .say{margin:0;font-family:var(--f-display);font-size:clamp(22px,3.2vw,30px);line-height:1.05;overflow-wrap:anywhere;color:var(--title-a)}
+.mbox small{grid-column:1/-1;color:var(--lo);font-size:17px}
+.mbox .ok{grid-column:1/-1;justify-self:center;min-width:120px;outline:2px solid var(--ink)}
+.mbox.read .bar{background:linear-gradient(90deg,#7b7d82,#a9acb1)}
+.mbox.in{animation:boxIn .6s cubic-bezier(.3,1.6,.5,1) var(--d,0s) both}
+@keyframes boxIn{from{transform:scale(.4) rotate(14deg)}}
+.mbox.hit{animation:shake .3s 3}
+.mico{width:50px;height:50px;display:grid;place-items:center;font-family:var(--f-display);font-size:28px;color:var(--hi)}
+.mico.warn{background:var(--sun);color:var(--ink);clip-path:polygon(50% 0,100% 100%,0 100%);padding-top:14px;font-size:24px}
+.mico.err{background:var(--red);border-radius:50%}
+.mico.info{background:var(--title-b);border-radius:50%;font-family:Georgia,serif;font-style:italic}
+.mico.love{background:var(--pop);border-radius:50%;animation:beat 1.1s ease-in-out infinite}
+@keyframes beat{15%{transform:scale(1.2)}30%{transform:scale(1)}45%{transform:scale(1.14)}60%{transform:scale(1)}}
+
+/* ---- marquee ---- */
+.marq{overflow:hidden;white-space:nowrap;background:var(--ink);color:var(--sun);border:2px solid var(--hi);font-size:24px;padding:6px 0}
+.marq span{display:inline-block;padding-left:100%;animation:marq 26s linear infinite}
+@keyframes marq{to{transform:translateX(-100%)}}
+
+/* ---- taskbar ---- */
+.taskbar{position:fixed;left:0;right:0;bottom:0;z-index:50;background:var(--win);border-top:2px solid var(--hi);
+  display:flex;align-items:center;gap:8px;padding:4px 6px calc(4px + env(safe-area-inset-bottom,0px))}
+.start{font-weight:700;display:flex;gap:6px;align-items:center;padding:3px 12px}
+.start i{font-style:normal;color:var(--pop)}
+.tasks{flex:1;min-width:0;display:flex;gap:6px;overflow:hidden}
+.task{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:180px;padding:3px 10px;font-size:18px}
+.clock{padding:3px 10px;font-size:19px;font-variant-numeric:tabular-nums;white-space:nowrap}
+.menu{position:fixed;left:6px;bottom:calc(46px + env(safe-area-inset-bottom,0px));z-index:60;display:flex;min-width:250px}
+.menu .side{background:linear-gradient(0deg,var(--title-a),var(--title-b));color:var(--hi);writing-mode:vertical-rl;transform:rotate(180deg);
+  font-family:var(--f-display);font-size:20px;padding:10px 6px}
+.menu ul{list-style:none;margin:0;padding:4px;flex:1}
+.menu a{display:block;padding:6px 12px;color:var(--ink);text-decoration:none;font-size:21px}
+.menu a:hover,.menu a:focus-visible{background:var(--title-a);color:var(--hi)}
+
+/* ---- toast ---- */
+.toast{position:fixed;right:14px;bottom:calc(58px + env(safe-area-inset-bottom,0px));z-index:70;display:flex;gap:12px;align-items:center;
+  background:#141518;color:var(--hi);border-radius:40px;padding:8px 22px 8px 8px;box-shadow:0 6px 0 rgba(0,0,0,.3);
+  transform:translateY(160%);transition:transform .45s cubic-bezier(.3,1.5,.5,1);max-width:calc(100vw - 28px)}
+.toast.show{transform:none}
+.toast .trophy{width:46px;height:46px;border-radius:50%;background:var(--mint);display:grid;place-items:center;font-size:26px;flex:none}
+.toast small{display:block;color:var(--mint);font-size:16px}
+.toast div{min-width:0;font-size:19px}
+
+canvas#fx{position:fixed;inset:0;pointer-events:none;z-index:80}
+
+@media (max-width:760px){
+  .two{grid-template-columns:1fr}
+  .gb form{grid-template-columns:1fr}
+  .hero .body{grid-template-columns:1fr}
+  .task{display:none}
+  body{font-size:19px}
+}
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}
+  .stonks .line{stroke-dashoffset:0}
+}
+</style>
+</head>
+<body>
+
+
+<canvas id="fx" aria-hidden="true"></canvas>
+
+<main class="page">
+
+  <!-- WIZARD PROGRESS -->
+  <section class="win wiz" aria-label="Progresso da despedida">
+    <div class="bar"><span class="t">Assistente de Despedida do Rodolfo</span><span class="ctl"><b>?</b><b>×</b></span></div>
+    <div class="body">
+      <div class="wiz-head"><strong id="wiz-title">Erro crítico</strong><span id="wiz-count">Etapa 1 de 7</span></div>
+      <div class="blocks sunk" id="blocks"></div>
+    </div>
+  </section>
+
+  <!-- HERO -->
+  <section class="win hero step on" id="erro" data-title="Erro crítico" data-drag>
+    <div class="bar drag"><span class="t">Rodolfo.exe — Erro crítico do sistema</span><span class="ctl"><b>_</b><b>□</b><b>×</b></span></div>
+    <div class="body">
+      <div class="ico-err" aria-hidden="true">!</div>
+      <div>
+        <p class="err-code">ERRO 0xR0D15SSS · módulo: equipe.dll</p>
+        <h1>O <span class="glitch">Rodolfo</span> vai embora</h1>
+        <p>O programa <b>Rodolfo.exe</b> realizou uma operação de crescimento profissional e será encerrado. A empresa pode apresentar instabilidade, piadas sem graça e ausência repentina de alguém pra resolver tudo.</p>
+        <p class="typed" id="typed" aria-live="polite"></p>
+      </div>
+      <div class="actions">
+        <button class="btn" id="cry">Chorar</button>
+        <button class="btn" id="flee">Impedir que ele saia</button>
+        <button class="btn" id="accept"><u>A</u>ceitar e comemorar</button>
+      </div>
+      <p class="fine">Dica: o botão do meio é só ilusão. Igual a gente achando que ele ia ficar.</p>
+    </div>
+  </section>
+
+  <div class="marq" aria-label="Avisos"><span>★ URGENTE: ELE CONSEGUIU ALGO MELHOR ★ RODISSSS NA ÁREA PELA ÚLTIMA VEZ ★ RODOLFÃOOOOOOOOOOOO ★VAGA ABERTA: PROCURA-SE ALGUÉM QUE AGUENTE A GENTE ★ AIII RODOLFÃOOOO ★ RODIISSSS TO PRESO ★ FALA RODOLFAOOOO ★ RODISSS TE AMO ★ ESTE NÃO É UM TESTE ★</span></div>
+
+  <!-- NICKNAMES -->
+  <section class="win nick step" id="apelidos" data-title="Apelidos" data-drag>
+    <div class="bar drag"><span class="t">Apelidos.txt — Bloco de Notas</span><span class="ctl"><b>_</b><b>□</b><b>×</b></span></div>
+    <div class="body">
+      <div class="chips" role="group" aria-label="Escolha o apelido">
+        <button class="chip" aria-pressed="true" data-nick="Rodolfã">Rodolfãooooooooooo</button>
+        <button class="chip" aria-pressed="false" data-nick="Rodi">Rodissss</button>
+        <button class="chip" aria-pressed="false" data-nick="Rodolf">Rodolfo (formal, raro)</button>
+      </div>
+      <div class="stretch" id="stretch" aria-live="polite"></div>
+      <div class="row">
+        <button class="btn" id="more">+ esticar</button>
+        <button class="btn" id="say">Gritar em voz alta</button>
+        <button class="btn" id="reset">Resetar</button>
+        <span class="meter" id="meter"></span>
+      </div>
+    </div>
+  </section>
+
+  <!-- MESSAGES -->
+  <section class="win msgs step" id="mensagens" data-title="Mensagens">
+    <div class="bar"><span class="t">Caixa de entrada — mensagens para o Rodolfo</span><span class="ctl"><b>_</b><b>□</b><b>×</b></span></div>
+    <div class="body">
+      <p class="lead">A equipe mandou algumas mensagens urgentes. Clique no botão de cada uma pra responder.</p>
+      <div class="msg-stage">
+        <article class="win mbox" style="--rot:-2deg">
+          <div class="bar"><span class="t">aviso.exe</span><span class="ctl"><b>×</b></span></div>
+          <div class="body">
+            <span class="mico warn" aria-hidden="true">!</span>
+            <p class="say">aiii Rodolfãoooo</p>
+            <small>Suspiro coletivo detectado no setor.</small>
+            <button class="btn ok" data-fx="tears" data-ach="Suspirou pelo Rodolfão">aiii</button>
+          </div>
+        </article>
+        <article class="win mbox" style="--rot:1.5deg">
+          <div class="bar"><span class="t">socorro.exe</span><span class="ctl"><b>×</b></span></div>
+          <div class="body">
+            <span class="mico err" aria-hidden="true">×</span>
+            <p class="say">Rodiissss to preso</p>
+            <small>Pedido de resgate. Prioridade: urgentíssima.</small>
+            <button class="btn ok" data-fx="confetti" data-ach="Soltou o Rodiissss">Soltar ele</button>
+          </div>
+        </article>
+        <article class="win mbox" style="--rot:-1deg">
+          <div class="bar"><span class="t">chamada.exe</span><span class="ctl"><b>×</b></span></div>
+          <div class="body">
+            <span class="mico info" aria-hidden="true">i</span>
+            <p class="say">fala Rodolfaoooo</p>
+            <small>Chamada recebida de: a equipe inteira.</small>
+            <button class="btn ok" data-fx="confetti" data-ach="Atendeu o fala Rodolfaoooo">Fala!</button>
+          </div>
+        </article>
+        <article class="win mbox" style="--rot:2deg">
+          <div class="bar"><span class="t">declaracao.exe</span><span class="ctl"><b>×</b></span></div>
+          <div class="body">
+            <span class="mico love" aria-hidden="true">♥</span>
+            <p class="say">Rodisss Te amo</p>
+            <small>Declaração pública. Não tem como desfazer.</small>
+            <button class="btn ok" data-fx="hearts" data-ach="Recebeu um te amo do Rodisss">Também</button>
+          </div>
+        </article>
+      </div>
+      <div class="row"><button class="btn" id="readall">Ouvir todas em voz alta</button><span class="meter" id="unread">4 mensagens não lidas</span></div>
+    </div>
+  </section>
+
+  <!-- MEMES -->
+  <section class="win step" id="memes" data-title="Memes">
+    <div class="bar"><span class="t">C:\Equipe\Memes\Rodolfo\ — 7 objetos</span><span class="ctl"><b>_</b><b>□</b><b>×</b></span></div>
+    <div class="body">
+      <div class="meme-grid">
+
+        <article class="meme">
+          <div class="drake">
+            <div class="face" aria-hidden="true">🙅‍♂️</div><div>Resolver o problema sozinho</div>
+            <div class="face yes" aria-hidden="true">😎</div><div>"Rodolfo, tem um minutinho?" (mesmo depois dele sair)</div>
+          </div>
+          <small>formato: Drake aprovando</small>
+        </article>
+
+        <article class="meme">
+          <div class="nobody">
+            <div>Ninguém:</div>
+            <div>Absolutamente ninguém:</div>
+            <div>O RH:</div>
+            <div class="shout">ELE PEDIU AS CONTAS</div>
+          </div>
+          <small>formato: ninguém, absolutamente ninguém</small>
+        </article>
+
+        <article class="meme">
+          <div class="fire">
+            <span class="cap top">A equipe na segunda sem o Rodolfo</span>
+            <span class="flame" style="left:6%">🔥</span><span class="flame" style="left:28%;animation-delay:.3s">🔥</span>
+            <span class="flame" style="left:62%;animation-delay:.6s">🔥</span><span class="flame" style="left:84%;animation-delay:.15s">🔥</span>
+            <span class="dog" aria-hidden="true">🐶☕</span>
+            <span class="cap bot">Tá tudo bem.</span>
+          </div>
+          <small>formato: this is fine</small>
+        </article>
+
+        <article class="meme">
+          <div class="stonks">
+            <span class="lbl">Carreira do Rodolfo ↗</span>
+            <svg viewBox="0 0 300 220" preserveAspectRatio="none" aria-hidden="true"><polyline class="line" points="10,200 60,180 95,190 140,140 175,150 215,90 250,100 290,20"/></svg>
+            <span class="guy" aria-hidden="true">🧑‍💼</span>
+            <span class="cap">STONKS</span>
+          </div>
+          <small>formato: stonks</small>
+        </article>
+
+        <article class="meme">
+          <div class="evr">
+            <div class="exp"><h4>Expectativa</h4><span class="big" aria-hidden="true">🥲</span>Vamos sentir falta, mas a vida segue.</div>
+            <div class="real"><h4>Realidade</h4><span class="big" aria-hidden="true">😭</span>Quem vai saber onde fica aquela senha?</div>
+          </div>
+          <small>formato: expectativa vs realidade</small>
+        </article>
+
+        <article class="meme">
+          <div class="notfound">
+            <div>&gt; procurando_substituto.sh</div>
+            <div class="bar404"><i></i></div>
+            <div class="e">404: RODOLFO NOT FOUND</div>
+            <div>Tente novamente nunca.</div>
+          </div>
+          <small>formato: terminal triste</small>
+        </article>
+
+        <article class="meme">
+          <div class="brain">
+            <div><p>Rodolfo</p><span aria-hidden="true">🧠</span></div>
+            <div><p>Rodissss</p><span aria-hidden="true">🧠</span></div>
+            <div><p>Rodolfaoooo</p><span aria-hidden="true">✨</span></div>
+            <div><p>RODOLFÃOOOOOOOOOOOO</p><span aria-hidden="true">🌌</span></div>
+          </div>
+          <small>formato: cérebro expandindo</small>
+        </article>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- CHANGELOG + STATS -->
+  <div class="two step" id="v2" data-title="Notas da v2.0">
+    <section class="win" id="changelog" data-drag>
+      <div class="bar drag"><span class="t">Rodolfo v2.0 — Notas da atualização</span><span class="ctl"><b>_</b><b>□</b><b>×</b></span></div>
+      <div class="body">
+        <div class="log sunk">
+          <h3>v2.0 "Algo Melhor"</h3>
+          <ul>
+            <li class="add">Novo cargo, nova empresa, novos desafios</li>
+            <li class="add">Crachá novo (foto finalmente boa?)</li>
+            <li class="add">Reuniões que realmente precisam acontecer</li>
+          </ul>
+          <ul>
+            <li class="del">Removida a cagada diária</li>
+            <li class="del">Removidos 47 grupos de Bitrix24</li>
+            <li class="del">Descontinuado: "Marcar uma agenda" e "Quais os próximos passos?"</li>
+          </ul>
+          <ul>
+            <li class="fix">Corrigido o bug de ter que aguentar a gente todo dia</li>
+            <li class="fix">Melhorada a performance geral da vida</li>
+            <li class="fix">Problema conhecido: ainda vai ser chamado de Rodolfãooooooooooo pra sempre</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section class="win" id="stats" data-drag>
+      <div class="bar drag"><span class="t">Gerenciador de Tarefas — Rodolfo</span><span class="ctl"><b>_</b><b>□</b><b>×</b></span></div>
+      <div class="body stats">
+        <div class="stat"><span class="k">Uso de carisma</span><span class="v" data-to="100">0%</span><div class="track sunk"><div class="fill"></div></div></div>
+        <div class="stat"><span class="k">Problemas que ele resolveu</span><span class="v" data-to="97">0%</span><div class="track sunk"><div class="fill"></div></div></div>
+        <div class="stat"><span class="k">Saudade da equipe</span><span class="v" data-to="100">0%</span><div class="track sunk"><div class="fill"></div></div></div>
+        <div class="stat"><span class="k">Vontade dele de voltar</span><span class="v" data-to="3">0%</span><div class="track sunk"><div class="fill"></div></div></div>
+        <div class="stat"><span class="k">Orgulho da gente</span><span class="v" data-to="100">0%</span><div class="track sunk"><div class="fill"></div></div></div>
+      </div>
+    </section>
+  </div>
+
+  <!-- GUESTBOOK -->
+  <section class="win gb step" id="recados" data-title="Mural de recados">
+    <div class="bar"><span class="t">Mural de Recados — deixe sua mensagem</span><span class="ctl"><b>_</b><b>□</b><b>×</b></span></div>
+    <div class="body">
+      <form id="gbform" autocomplete="off">
+        <input class="sunk" id="gb-name" maxlength="30" placeholder="Seu nome" aria-label="Seu nome" required>
+        <input class="sunk" id="gb-msg" maxlength="160" placeholder="Um recado pro Rodissss..." aria-label="Recado" required>
+        <button class="btn" type="submit">Colar no mural</button>
+      </form>
+      <p class="gb-status" id="gb-status" aria-live="polite"></p>
+      <div class="notes" id="notes"></div>
+    </div>
+  </section>
+
+  <!-- FINALE -->
+  <section class="win finale step" id="tchau" data-title="Despedida">
+    <div class="bar"><span class="t">Desligar o computador?</span><span class="ctl"><b>_</b><b>□</b><b>×</b></span></div>
+    <div class="body">
+      <h2>Vai com tudo, Rodolfãooooooooooo!</h2>
+      <p>Obrigado pelas risadas, pela paciência e por cada "deixa comigo". Agora é seguro desligar o Rodolfo daqui e ligar ele num lugar melhor. A gente torce muito por você.</p>
+      <button class="btn big-btn" id="party">Soltar os confetes</button>
+    </div>
+  </section>
+  <nav class="wiz-nav" aria-label="Navegar pelas etapas">
+    <button class="btn" id="prev">&lt; Voltar</button>
+    <span class="hint">dica: setas ← → do teclado também funcionam</span>
+    <button class="btn" id="next">Avançar &gt;</button>
+  </nav>
+
+</main>
+
+<nav class="menu win" id="menu" hidden aria-label="Menu Iniciar">
+  <div class="side">RodOS 95</div>
+  <ul>
+    <li><a href="#erro">Rodolfo.exe</a></li>
+    <li><a href="#apelidos">Apelidos.txt</a></li>
+    <li><a href="#mensagens">Mensagens</a></li>
+    <li><a href="#memes">Memes</a></li>
+    <li><a href="#v2">Notas v2.0</a></li>
+    <li><a href="#recados">Mural de recados</a></li>
+    <li><a href="#tchau">Desligar...</a></li>
+  </ul>
+</nav>
+
+<footer class="taskbar">
+  <button class="btn start" id="startbtn" aria-expanded="false" aria-controls="menu"><i>✦</i>Iniciar</button>
+  <div class="tasks">
+    <span class="task sunk">Rodolfo.exe</span>
+    <span class="task sunk">Apelidos.txt</span>
+    <span class="task sunk">Memes</span>
+  </div>
+  <span class="clock sunk" id="clock">--:--</span>
+</footer>
+
+<div class="toast" id="toast" role="status" aria-live="polite"><span class="trophy" aria-hidden="true">🏆</span><div><small>Conquista desbloqueada</small><span id="toast-t"></span></div></div>
+
+<script>
+(() => {
+  const $ = s => document.querySelector(s);
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  /* ---------- confetti ---------- */
+  const cv = $('#fx'), cx = cv.getContext('2d');
+  let parts = [], raf = 0;
+  const size = () => { cv.width = innerWidth * devicePixelRatio; cv.height = innerHeight * devicePixelRatio; cx.setTransform(devicePixelRatio,0,0,devicePixelRatio,0,0); };
+  size(); addEventListener('resize', size);
+  const COLORS = ['#ff2e88','#ffd23f','#3ddc97','#1f86d6','#ffffff'];
+  function burst(n = 160, mode = 'confetti') {
+    if (reduce) n = Math.min(n, 30);
+    for (let i = 0; i < n; i++) {
+      if (mode === 'hearts') { parts.push({x: Math.random()*innerWidth, y: innerHeight + 20 + Math.random()*120, vx: (Math.random()-.5)*1.5, vy: -(4+Math.random()*5), g: .03, txt: ['💖','💗','❤️','💘'][i%4], s: 22+Math.random()*22, life: 240}); continue; }
+      if (mode === 'tears') parts.push({x: Math.random()*innerWidth, y: -20 - Math.random()*innerHeight*.5, vx: 0, vy: 2+Math.random()*3, g: .05, txt: '💧', s: 18+Math.random()*14, life: 260});
+      else parts.push({x: innerWidth/2, y: innerHeight*.55, vx: (Math.random()-.5)*16, vy: -Math.random()*16-4, g: .35, c: COLORS[i%5], w: 6+Math.random()*6, h: 8+Math.random()*8, r: Math.random()*6, vr: (Math.random()-.5)*.3, life: 220, txt: Math.random()<.06 ? ['RODIS','ÃOOO','🎉'][i%3] : null, s: 18});
+    }
+    if (!raf) loop();
+  }
+  function loop() {
+    cx.clearRect(0,0,innerWidth,innerHeight);
+    parts = parts.filter(p => p.life-- > 0 && p.y < innerHeight + 40);
+    for (const p of parts) {
+      p.vy += p.g; p.vx *= .99; p.x += p.vx; p.y += p.vy; if (p.vr) p.r += p.vr;
+      if (p.txt) { cx.font = `${p.s}px Bungee, sans-serif`; cx.fillStyle = p.c || '#fff'; cx.fillText(p.txt, p.x, p.y); }
+      else { cx.save(); cx.translate(p.x,p.y); cx.rotate(p.r); cx.fillStyle = p.c; cx.fillRect(-p.w/2,-p.h/2,p.w,p.h); cx.restore(); }
+    }
+    raf = parts.length ? requestAnimationFrame(loop) : (cx.clearRect(0,0,innerWidth,innerHeight), 0);
+  }
+
+  /* ---------- achievements ---------- */
+  const got = new Set(); let tq = [], showing = false;
+  function achieve(t) {
+    if (got.has(t)) return; got.add(t); tq.push(t); if (!showing) nextToast();
+  }
+  function nextToast() {
+    const t = tq.shift(); if (!t) { showing = false; return; }
+    showing = true; $('#toast-t').textContent = t; $('#toast').classList.add('show');
+    setTimeout(() => { $('#toast').classList.remove('show'); setTimeout(nextToast, 500); }, 3200);
+  }
+  setTimeout(() => achieve('Abriu o site de despedida do Rodolfo'), 1400);
+
+  /* ---------- typewriter ---------- */
+  const lines = ['> carregando saudade...', '> aiii Rodolfãoooo', '> Rodiissss to preso', '> fala Rodolfaoooo', '> Rodisss Te amo ♥', '> Rodissss.dll não encontrado', '> RODOLFÃOOOOOOOOOOOO', '> modo despedida ativado', '> sucesso garantido na nova empresa ✓'];
+  let li = 0, ci = 0, del = false;
+  const typed = $('#typed');
+  (function type() {
+    const L = lines[li];
+    typed.textContent = L.slice(0, ci);
+    if (!del && ci < L.length) ci++;
+    else if (!del) { del = true; return setTimeout(type, 1500); }
+    else if (ci > 0) ci--;
+    else { del = false; li = (li + 1) % lines.length; }
+    setTimeout(type, del ? 28 : 65);
+  })();
+
+  /* ---------- hero buttons ---------- */
+  const flee = $('#flee'); let dodges = 0;
+  function dodge() {
+    const box = flee.parentElement.getBoundingClientRect();
+    const maxX = Math.max(40, box.width - flee.offsetWidth - 20);
+    const x = -Math.random() * maxX, y = (Math.random() - .5) * 50;
+    flee.style.transform = `translate(${x}px, ${y}px) rotate(${(Math.random()-.5)*14}deg)`;
+    if (++dodges === 5) achieve('Tentou 5 vezes impedir o inevitável');
+    const msgs = ['Impedir que ele saia','Nem tenta','Ele já assinou','Tarde demais','Aceita, dói menos','Rodissss diz não'];
+    flee.textContent = msgs[dodges % msgs.length];
+  }
+  flee.addEventListener('pointerenter', e => { if (e.pointerType === 'mouse') dodge(); });
+  flee.addEventListener('click', e => { e.preventDefault(); dodge(); });
+  $('#accept').addEventListener('click', () => { burst(); achieve('Aceitou que ele merece algo melhor'); });
+  $('#cry').addEventListener('click', () => { burst(70, 'tears'); achieve('Chorou no expediente'); });
+
+  /* ---------- nickname stretcher ---------- */
+  const stretch = $('#stretch'), meter = $('#meter');
+  const tails = { 'Rodolfã': 'o', 'Rodi': 's', 'Rodolf': 'o' };
+  let base = 'Rodolfã', n = 6;
+  function render() {
+    const t = tails[base];
+    stretch.innerHTML = '';
+    stretch.append(document.createTextNode(base));
+    for (let i = 0; i < n; i++) {
+      const s = document.createElement('span'); s.className = 'u'; s.textContent = t;
+      s.style.animationDelay = (i * 60) + 'ms'; stretch.append(s);
+    }
+    stretch.append(document.createTextNode('!'));
+    meter.textContent = `${n} "${t}"s · nível de saudade: ${n < 10 ? 'leve' : n < 25 ? 'forte' : n < 50 ? 'crítico' : 'RODOLFÃOOOOOOOOOOOO'}`;
+  }
+  document.querySelectorAll('.chip').forEach(c => c.addEventListener('click', () => {
+    document.querySelectorAll('.chip').forEach(x => x.setAttribute('aria-pressed', 'false'));
+    c.setAttribute('aria-pressed', 'true'); base = c.dataset.nick; n = base === 'Rodolf' ? 1 : 4; render();
+  }));
+  $('#more').addEventListener('click', () => {
+    n += 3; render();
+    if (n >= 30) achieve('Esticou o apelido além do razoável');
+    if (n >= 60) { achieve('RODOLFÃOOOOOOOOOOOO'); burst(80); }
+  });
+  $('#reset').addEventListener('click', () => { n = 4; render(); });
+  $('#say').addEventListener('click', () => {
+    achieve('Gritou o apelido no escritório');
+    try {
+      const u = new SpeechSynthesisUtterance(base + tails[base].repeat(Math.min(n, 25)));
+      u.lang = 'pt-BR'; u.rate = .9; u.pitch = 1.3;
+      speechSynthesis.cancel(); speechSynthesis.speak(u);
+    } catch (e) {}
+    stretch.animate([{transform:'scale(1)'},{transform:'scale(1.06) rotate(-1deg)'},{transform:'scale(1)'}], {duration: 500});
+  });
+  render();
+
+  /* ---------- stats ---------- */
+  const io = new IntersectionObserver(es => es.forEach(e => {
+    if (!e.isIntersecting) return; io.unobserve(e.target);
+    e.target.querySelectorAll('.stat').forEach((s, i) => {
+      const to = +s.querySelector('.v').dataset.to, v = s.querySelector('.v');
+      setTimeout(() => {
+        s.querySelector('.fill').style.width = to + '%';
+        const t0 = performance.now();
+        (function tick(t) { const k = Math.min(1, (t - t0) / 1600); v.textContent = Math.round(to * (1 - Math.pow(1-k, 3))) + '%'; if (k < 1) requestAnimationFrame(tick); })(t0);
+      }, i * 180);
+    });
+  }), {threshold: .3});
+  io.observe($('#stats'));
+
+  /* ---------- guestbook (mural compartilhado via Supabase) ---------- */
+  const SUPABASE_URL = 'https://bijcswionrgdrtztxbvt.supabase.co';
+  const SUPABASE_KEY = 'sb_publishable_rTH0yo7d4T_UCChcojH3aQ_tJ10OZmD';
+  const API = SUPABASE_URL + '/rest/v1/recados';
+  const HEADERS = {apikey: SUPABASE_KEY, 'Content-Type': 'application/json'};
+  const notesBox = $('#notes'), gbStatus = $('#gb-status'), gbForm = $('#gbform');
+  let lastSig = '';
+  function note(o) {
+    const d = document.createElement('div'); d.className = 'note';
+    d.textContent = o.m; const b = document.createElement('b'); b.textContent = '— ' + o.n; d.append(b); return d;
+  }
+  function drawNotes(rows) {
+    notesBox.innerHTML = '';
+    if (!rows.length) {
+      const p = document.createElement('p'); p.className = 'empty';
+      p.textContent = 'Nenhum recado ainda. Seja a primeira pessoa a escrever pro Rodolfãooo!';
+      notesBox.append(p); return;
+    }
+    rows.forEach(r => notesBox.append(note({n: String(r.nome || 'Anônimo').slice(0, 30), m: String(r.msg || '').slice(0, 160)})));
+  }
+  async function loadNotes() {
+    try {
+      const res = await fetch(API + '?select=id,nome,msg,created_at&order=created_at.desc&limit=300', {headers: HEADERS});
+      if (!res.ok) throw new Error(res.status);
+      const rows = await res.json();
+      const sig = rows.map(r => r.id).join(',');
+      if (sig !== lastSig) { lastSig = sig; drawNotes(rows); }
+      gbStatus.textContent = rows.length ? `${rows.length} ${rows.length === 1 ? 'recado' : 'recados'} no mural` : 'O mural está esperando o primeiro recado.';
+    } catch (e) {
+      gbStatus.textContent = 'Não deu pra carregar os recados agora. Recarregue a página.';
+    }
+  }
+  drawNotes([]);
+  gbStatus.textContent = 'Carregando os recados da equipe...';
+  loadNotes();
+  setInterval(() => { if (!document.hidden) loadNotes(); }, 10000);
+  gbForm.addEventListener('submit', async e => {
+    e.preventDefault();
+    const n = $('#gb-name').value.trim(), m = $('#gb-msg').value.trim();
+    if (!n || !m) return;
+    const btn = gbForm.querySelector('button'); btn.disabled = true;
+    try {
+      const res = await fetch(API, {method: 'POST', headers: {...HEADERS, Prefer: 'return=minimal'}, body: JSON.stringify({nome: n.slice(0, 30), msg: m.slice(0, 160)})});
+      if (!res.ok) throw new Error(res.status);
+      $('#gb-msg').value = ''; burst(40); achieve('Deixou um recado no mural');
+      await loadNotes();
+    } catch (err) {
+      gbStatus.textContent = 'Não deu pra salvar o recado. Tente de novo.';
+    }
+    btn.disabled = false;
+  });
+
+  /* ---------- finale ---------- */
+  $('#party').addEventListener('click', () => { burst(220); setTimeout(() => burst(160), 400); achieve('Mandou o Rodolfo embora em grande estilo'); });
+
+  /* ---------- start menu + clock ---------- */
+  const menu = $('#menu'), sb = $('#startbtn');
+  sb.addEventListener('click', e => { e.stopPropagation(); menu.hidden = !menu.hidden; sb.setAttribute('aria-expanded', String(!menu.hidden)); });
+  document.addEventListener('click', e => { if (!menu.hidden && !menu.contains(e.target)) { menu.hidden = true; sb.setAttribute('aria-expanded','false'); } });
+  menu.addEventListener('click', e => { if (e.target.closest('a')) { menu.hidden = true; sb.setAttribute('aria-expanded','false'); } });
+  const clock = $('#clock');
+  const tick = () => { const d = new Date(); clock.textContent = d.toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'}); };
+  tick(); setInterval(tick, 15000);
+
+  /* ---------- draggable windows (desktop only) ---------- */
+  document.querySelectorAll('[data-drag]').forEach(w => {
+    const bar = w.querySelector('.bar'); let sx, sy, ox = 0, oy = 0, on = false;
+    bar.addEventListener('pointerdown', e => {
+      if (innerWidth < 760 || e.pointerType !== 'mouse') return;
+      on = true; sx = e.clientX - ox; sy = e.clientY - oy; bar.setPointerCapture(e.pointerId); w.style.zIndex = 20; bar.style.cursor = 'grabbing';
+    });
+    bar.addEventListener('pointermove', e => { if (!on) return; ox = e.clientX - sx; oy = e.clientY - sy; w.style.transform = `translate(${ox}px,${oy}px)`; });
+    bar.addEventListener('pointerup', () => { if (!on) return; on = false; bar.style.cursor = ''; if (Math.hypot(ox, oy) > 120) achieve('Arrastou janela igual em 1998'); });
+    bar.addEventListener('dblclick', () => { ox = oy = 0; w.style.transform = ''; });
+  });
+
+  /* ---------- message boxes ---------- */
+  const speak = (t, cancel = true) => { try { if (cancel) speechSynthesis.cancel(); const u = new SpeechSynthesisUtterance(t); u.lang = 'pt-BR'; u.rate = .95; u.pitch = 1.25; speechSynthesis.speak(u); } catch (e) {} };
+  const boxes = [...document.querySelectorAll('.mbox')];
+  function playBoxes() {
+    boxes.forEach((b, i) => { b.classList.remove('in', 'hit'); void b.offsetWidth; b.style.setProperty('--d', (i * .3) + 's'); b.classList.add('in'); });
+  }
+  function updateUnread() {
+    const k = boxes.filter(b => !b.classList.contains('read')).length;
+    $('#unread').textContent = k ? `${k} ${k === 1 ? 'mensagem não lida' : 'mensagens não lidas'}` : 'Todas lidas. Sentimentos processados com sucesso.';
+    if (!k) achieve('Respondeu todas as mensagens');
+  }
+  boxes.forEach(b => b.querySelector('.ok').addEventListener('click', e => {
+    const btn = e.currentTarget;
+    speak(b.querySelector('.say').textContent);
+    b.classList.remove('in', 'hit'); void b.offsetWidth; b.classList.add('hit', 'read');
+    burst(btn.dataset.fx === 'confetti' ? 70 : 60, btn.dataset.fx);
+    achieve(btn.dataset.ach); updateUnread();
+  }));
+  $('#readall').addEventListener('click', () => {
+    try { speechSynthesis.cancel(); } catch (e) {}
+    boxes.forEach(b => speak(b.querySelector('.say').textContent, false));
+    burst(50, 'hearts');
+  });
+
+  /* ---------- steps ---------- */
+  const steps = [...document.querySelectorAll('.step')];
+  const blocks = $('#blocks'), prev = $('#prev'), next = $('#next');
+  blocks.style.gridTemplateColumns = `repeat(${steps.length}, 1fr)`;
+  steps.forEach((s, i) => {
+    const b = document.createElement('button');
+    b.setAttribute('aria-label', `Ir para etapa ${i + 1}: ${s.dataset.title}`);
+    b.addEventListener('click', () => go(i));
+    blocks.append(b);
+  });
+  let cur = 0;
+  function go(i, scroll = true) {
+    i = Math.max(0, Math.min(steps.length - 1, i));
+    steps.forEach((s, k) => s.classList.toggle('on', k === i));
+    cur = i;
+    [...blocks.children].forEach((b, k) => { b.className = k < i ? 'done' : k === i ? 'cur' : ''; });
+    $('#wiz-title').textContent = steps[i].dataset.title;
+    $('#wiz-count').textContent = `Etapa ${i + 1} de ${steps.length}`;
+    prev.disabled = i === 0;
+    next.textContent = i === steps.length - 1 ? 'Concluir ✓' : 'Avançar >';
+    if (steps[i].id === 'mensagens') playBoxes();
+    if (i === steps.length - 1) achieve('Chegou ao fim da despedida');
+    try { history.replaceState(null, '', '#' + steps[i].id); } catch (e) {}
+    if (scroll) scrollTo({top: 0, behavior: reduce ? 'auto' : 'smooth'});
+  }
+  prev.addEventListener('click', () => go(cur - 1));
+  next.addEventListener('click', () => {
+    if (cur === steps.length - 1) { burst(220); setTimeout(() => burst(80, 'hearts'), 300); achieve('Concluiu a instalação do Rodolfo v2.0'); }
+    else go(cur + 1);
+  });
+  document.querySelectorAll('.menu a').forEach(a => a.addEventListener('click', e => {
+    e.preventDefault(); const k = steps.findIndex(s => s.id === a.hash.slice(1)); if (k >= 0) go(k);
+  }));
+  addEventListener('keydown', e => {
+    if (e.target.matches('input, textarea')) return;
+    if (e.key === 'ArrowRight') go(cur + 1);
+    if (e.key === 'ArrowLeft') go(cur - 1);
+  });
+  const start = steps.findIndex(s => s.id === location.hash.slice(1));
+  go(start > 0 ? start : 0, false);
+
+  /* ---------- secret: digite "rodis" ---------- */
+  let buf = '';
+  addEventListener('keydown', e => {
+    if (e.target.matches('input')) return;
+    buf = (buf + e.key.toLowerCase()).slice(-5);
+    if (buf === 'rodis') { burst(200); achieve('Código secreto: RODISSSS'); document.body.animate([{filter:'hue-rotate(0)'},{filter:'hue-rotate(360deg)'}], {duration: 1500}); }
+  });
+})();
+</script>
+
+</body>
+</html>
