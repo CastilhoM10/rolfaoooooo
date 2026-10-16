@@ -1,4 +1,8 @@
-<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>RodOS 95</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -18,6 +22,7 @@
 *{box-sizing:border-box}
 [hidden]{display:none!important}
 body{
+  margin:0;
   background:var(--desk);
   background-image:radial-gradient(var(--desk-dot) 1px, transparent 1.4px);
   background-size:18px 18px;
@@ -281,6 +286,9 @@ canvas#fx{position:fixed;inset:0;pointer-events:none;z-index:80}
   .stonks .line{stroke-dashoffset:0}
 }
 </style>
+</head>
+<body>
+
 
 <canvas id="fx" aria-hidden="true"></canvas>
 
@@ -702,46 +710,56 @@ canvas#fx{position:fixed;inset:0;pointer-events:none;z-index:80}
   }), {threshold: .3});
   io.observe($('#stats'));
 
-  /* ---------- guestbook (mural compartilhado) ---------- */
+  /* ---------- guestbook (mural compartilhado via Supabase) ---------- */
+  const SUPABASE_URL = 'https://bijcswionrgdrtztxbvt.supabase.co';
+  const SUPABASE_KEY = 'sb_publishable_rTH0yo7d4T_UCChcojH3aQ_tJ10OZmD';
+  const API = SUPABASE_URL + '/rest/v1/recados';
+  const HEADERS = {apikey: SUPABASE_KEY, 'Content-Type': 'application/json'};
   const notesBox = $('#notes'), gbStatus = $('#gb-status'), gbForm = $('#gbform');
-  let col = null;
-  const lockForm = msg => { gbForm.querySelectorAll('input, button').forEach(x => x.disabled = true); gbStatus.textContent = msg; };
+  let lastSig = '';
   function note(o) {
     const d = document.createElement('div'); d.className = 'note';
     d.textContent = o.m; const b = document.createElement('b'); b.textContent = '— ' + o.n; d.append(b); return d;
   }
-  function drawNotes(docs) {
+  function drawNotes(rows) {
     notesBox.innerHTML = '';
-    if (!docs.length) {
+    if (!rows.length) {
       const p = document.createElement('p'); p.className = 'empty';
       p.textContent = 'Nenhum recado ainda. Seja a primeira pessoa a escrever pro Rodolfãooo!';
       notesBox.append(p); return;
     }
-    docs.forEach(d => { const o = d.data() || {}; notesBox.append(note({n: String(o.nome || 'Anônimo').slice(0, 30), m: String(o.msg || '').slice(0, 160)})); });
+    rows.forEach(r => notesBox.append(note({n: String(r.nome || 'Anônimo').slice(0, 30), m: String(r.msg || '').slice(0, 160)})));
+  }
+  async function loadNotes() {
+    try {
+      const res = await fetch(API + '?select=id,nome,msg,created_at&order=created_at.desc&limit=300', {headers: HEADERS});
+      if (!res.ok) throw new Error(res.status);
+      const rows = await res.json();
+      const sig = rows.map(r => r.id).join(',');
+      if (sig !== lastSig) { lastSig = sig; drawNotes(rows); }
+      gbStatus.textContent = rows.length ? `${rows.length} ${rows.length === 1 ? 'recado' : 'recados'} no mural` : 'O mural está esperando o primeiro recado.';
+    } catch (e) {
+      gbStatus.textContent = 'Não deu pra carregar os recados agora. Recarregue a página.';
+    }
   }
   drawNotes([]);
   gbStatus.textContent = 'Carregando os recados da equipe...';
-  (window.claude && window.claude.use ? window.claude.use('db') : Promise.resolve(null)).then(db => {
-    if (!db) { lockForm('Pra ver e deixar recados, abra este site com sua conta do Claude.'); return; }
-    col = db.collection('recados');
-    col.orderBy('at', 'desc').limit(300).onSnapshot(
-      s => { drawNotes(s.docs); gbStatus.textContent = s.size ? `${s.size} ${s.size === 1 ? 'recado' : 'recados'} no mural` : 'O mural está esperando o primeiro recado.'; },
-      () => { gbStatus.textContent = 'Não deu pra carregar os recados agora. Recarregue a página.'; }
-    );
-  });
+  loadNotes();
+  setInterval(() => { if (!document.hidden) loadNotes(); }, 10000);
   gbForm.addEventListener('submit', async e => {
     e.preventDefault();
     const n = $('#gb-name').value.trim(), m = $('#gb-msg').value.trim();
-    if (!n || !m || !col) return;
+    if (!n || !m) return;
     const btn = gbForm.querySelector('button'); btn.disabled = true;
     try {
-      await col.add({nome: n.slice(0, 30), msg: m.slice(0, 160), at: Date.now()});
+      const res = await fetch(API, {method: 'POST', headers: {...HEADERS, Prefer: 'return=minimal'}, body: JSON.stringify({nome: n.slice(0, 30), msg: m.slice(0, 160)})});
+      if (!res.ok) throw new Error(res.status);
       $('#gb-msg').value = ''; burst(40); achieve('Deixou um recado no mural');
-      btn.disabled = false;
+      await loadNotes();
     } catch (err) {
-      if (err && err.code === 'invalid_argument') lockForm('Seu acesso a este site é só de leitura. Peça pra quem te mandou o link liberar acesso pra você escrever.');
-      else { gbStatus.textContent = 'Não deu pra salvar o recado. Tente de novo.'; btn.disabled = false; }
+      gbStatus.textContent = 'Não deu pra salvar o recado. Tente de novo.';
     }
+    btn.disabled = false;
   });
 
   /* ---------- finale ---------- */
@@ -961,4 +979,5 @@ canvas#fx{position:fixed;inset:0;pointer-events:none;z-index:80}
 })();
 </script>
 
-</body></html>
+</body>
+</html>
